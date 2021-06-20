@@ -20,7 +20,7 @@ resource "azurerm_linux_virtual_machine" "test" {
   network_interface_ids = [azurerm_network_interface.test.id]
   admin_ssh_key {
     username   = var.vm_admin_username
-    public_key = file("/home/vsts/work/_temp/udacity_azure.pub")
+    public_key = file("/home/azureuser/azp/agent/_work/_temp/udacity_azure.pub")
   }
   os_disk {
     caching           = "ReadWrite"

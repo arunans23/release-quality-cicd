@@ -131,8 +131,9 @@ stages:
             displayName: Deploy Azure WebApp
             inputs:
               azureSubscription: 'azurerm-sc'
-              appName: 'devops-terraform-application-appservice'
+              appName: 'devops-terraform-application-AppService'
               appType: webApp
+              resourceGroupName: 'nauran-devops-tf'
               package: $(Pipeline.Workspace)/drop-fakerestapi/fakerestapi-$(Build.BuildId).zip
               deploymentMethod: zipDeploy
 

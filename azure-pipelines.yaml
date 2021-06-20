@@ -14,7 +14,7 @@ stages:
   - job: provision_azure_infrastructure
     displayName: Provision Azure Infrastructure
     pool:
-      vmImage: 'ubuntu-18.04'
+      name: 'MyAgentPool'
     steps:
     - task: DownloadSecureFile@1
       name: tfvardef
@@ -84,7 +84,7 @@ stages:
   - job: build_artifacts
     displayName: Build Artifacts
     pool:
-      vmImage: 'ubuntu-18.04'
+      name: 'MyAgentPool'
     steps:
     - task: ArchiveFiles@2
       displayName: Archive FakeRestAPI
@@ -121,7 +121,7 @@ stages:
   - deployment: deployment_fakerestapi
     displayName: Deploy FakeRestAPI
     pool:
-      vmImage: 'ubuntu-18.04'
+      name: 'MyAgentPool'
     environment: 'TEST'
     strategy:
       runOnce:
@@ -209,7 +209,7 @@ stages:
   - job: test_jmeter
     displayName: Test JMeter
     pool:
-      vmImage: 'ubuntu-18.04'
+      name: 'MyAgentPool'
     steps:
     - bash: |
         sudo apt-get install openjdk-11-jre-headless -y
@@ -266,7 +266,7 @@ stages:
   - job: test_newman
     displayName: Test Postman (using Newman CLI)
     pool:
-      vmImage: 'ubuntu-18.04'
+      name: 'MyAgentPool'
     steps: 
     - task: NodeTool@0
       displayName: Install Node v12.X
@@ -313,7 +313,7 @@ stages:
   - job: destroy_azure_infrastructure
     displayName: Destroy Azure Infrastructure
     pool:
-      vmImage: 'ubuntu-18.04'
+      name: 'MyAgentPool'
     steps:
     - task: DownloadSecureFile@1
       name: tfvardef

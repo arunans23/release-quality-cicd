@@ -1,7 +1,3 @@
-name: Ensuring Release Quality Pipeline
-variables:
-  python.version: '3.7.6'
-
 # Deploy the infrastructure needed for the release
 stages:
 - stage: Prepare
@@ -235,30 +231,34 @@ stages:
         targetPath: '$(System.DefaultWorkingDirectory)/log/jmeter'
         artifactName: 'drop-jmeter-logs'
 
-  - job: test_newman
+  - job: test_postman
     displayName: Test with Postman
     # Using Self Hosted Agent
     pool:
       name: 'MyAgentPool'
     steps: 
+    # Installing Node
     - task: NodeTool@0
       displayName: Install Node v12.X
       inputs:
         versionSpec: '12.x'
+
+    # Installing Newman
     - bash: |
         npm install -g newman
         newman --version
-        # create log directory
         mkdir -p log/newman
-        pwd
-        ls -la
       displayName: Install Newman
+
+    # Running Newman Regression test  
     - bash: |
         newman run automatedtesting/postman/regression-test.json \
                    --reporters cli,junit \
                    --reporter-junit-export log/newman/regression-test.xml \
                    --suppress-exit-code
-      displayName: Newman regression test
+      displayName: Newman Regression test
+
+    # Running Newman Validation test
     - bash: |
         newman run automatedtesting/postman/validation-test.json \
                    -e automatedtesting/postman/validation-test-env.postman-environment.json \
@@ -266,12 +266,16 @@ stages:
                    --reporter-junit-export log/newman/validation-test.xml \
                    --suppress-exit-code
         ls -la $(System.DefaultWorkingDirectory)/log/newman/
-      displayName: Newman validation test
+      displayName: Newman Validation test
+
+    # Publishing Newman logs
     - task: PublishPipelineArtifact@1
       displayName: Publish Newman logs
       inputs:
         targetPath: '$(System.DefaultWorkingDirectory)/log/newman'
         artifactName: 'drop-newman-logs'
+
+    # Publishing results
     - task: PublishTestResults@2
       displayName: 'Publish Newman test results'
       inputs:

@@ -11,8 +11,8 @@ def login(driver, user, password):
     driver.find_element_by_css_selector("input[id='user-name']").send_keys(user)
     driver.find_element_by_css_selector("input[id='password']").send_keys(password)
     driver.find_element_by_id("login-button").click()
-    product_label = driver.find_element_by_css_selector("div[class='product_label']").text
-    assert "Products" in product_label
+    product_label = driver.find_element_by_css_selector("span[class='title']").text
+    assert "PRODUCTS" in product_label
     print(timestamp() + 'Login successful with username {:s}'.format(user))
 
 # Add products to the cart
@@ -21,13 +21,14 @@ def add_cart(driver, number):
         element = "a[id='item_" + str(i) + "_title_link']"
         driver.find_element_by_css_selector(element).click()
         driver.find_element_by_css_selector("button.btn_primary.btn_inventory").click() 
-        product = driver.find_element_by_css_selector("div[class='inventory_details_name']").text 
+        product = driver.find_element_by_css_selector("div[class='inventory_details_name large_size']").text 
         print(timestamp() + "Shopping cart += " + product) 
         driver.find_element_by_css_selector("button.inventory_details_back_button").click() 
     print(timestamp() + 'Number of items added to the shopping cart : {:d}'.format(number))
-    number_element = "div[span='shopping_cart_link']"
+    number_element = "span[class='shopping_cart_badge']"
     cart_number = driver.find_element_by_css_selector(number_element).text
-    assert cart_number == 6
+    print(timestamp() + "Cart number = " + cart_number) 
+    assert int(cart_number) == 6
 
 
 # Remove products to the cart
@@ -36,13 +37,13 @@ def remove_cart(driver, number):
         element = "a[id='item_" + str(i) + "_title_link']"
         driver.find_element_by_css_selector(element).click()
         driver.find_element_by_css_selector("button.btn_secondary.btn_inventory").click()
-        product = driver.find_element_by_css_selector("div[class='inventory_details_name']").text
+        product = driver.find_element_by_css_selector("div[class='inventory_details_name large_size']").text
         print(timestamp() + "Shopping cart -= " + product) 
         driver.find_element_by_css_selector("button.inventory_details_back_button").click()
-    print(timestamp() + 'Number of items added to the shopping cart : {:d}'.format(number))
-    number_element = "div[span='shopping_cart_link']"
+    print(timestamp() + 'Number of items removed from the shopping cart : {:d}'.format(number))
+    number_element = "a[class='shopping_cart_link']"
     cart_number = driver.find_element_by_css_selector(number_element).text
-    assert cart_number == 0
+    assert cart_number is ''
 
 # Get chrome drive
 def getChromeDriver():

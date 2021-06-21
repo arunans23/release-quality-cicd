@@ -252,16 +252,16 @@ stages:
 
     # Running Newman Regression test  
     - bash: |
-        newman run automatedtesting/postman/regression-test.json \
+        newman run automatedtesting/postman/Regression-Test-Suite.postman_collection.json \
                    --reporters cli,junit \
-                   --reporter-junit-export log/newman/regression-test.xml \
+                   --reporter-junit-export log/newman/regression-test-suite.xml \
                    --suppress-exit-code
       displayName: Newman Regression test
 
     # Running Newman Validation test
     - bash: |
         newman run automatedtesting/postman/validation-test.json \
-                   -e automatedtesting/postman/validation-test-env.postman-environment.json \
+                   -e automatedtesting/postman/Validation-Test-Suite.postman_collection.json \
                    --reporters cli,junit \
                    --reporter-junit-export log/newman/validation-test.xml \
                    --suppress-exit-code

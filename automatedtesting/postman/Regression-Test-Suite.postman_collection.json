@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "a837e746-8941-47ae-b250-e87152559841",
-		"name": "Regression Test",
+		"_postman_id": "a4ee6c74-1f29-4916-b79e-1b95452a5c0f",
+		"name": "Regression-Test-Suite",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -11,7 +11,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "ded58463-2520-4358-91f0-eec5bf5a7da9",
 						"exec": [
 							"pm.test(\"Successful response\", function () {",
 							"    pm.expect(pm.response.text()).to.include(\"success\");",
@@ -58,7 +57,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "ca903a60-6c42-4529-9232-60006a5cee1f",
 						"exec": [
 							"pm.test(\"Successful response\", function () {",
 							"    pm.expect(pm.response.text()).to.include(\"success\");",
@@ -95,7 +93,6 @@
 				{
 					"listen": "prerequest",
 					"script": {
-						"id": "4f91732a-ecda-4774-aa0d-b8f1ecbc43c7",
 						"exec": [
 							""
 						],
@@ -105,7 +102,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "111d3fcf-9354-4425-8d81-b3f0cbce09b9",
 						"exec": [
 							"pm.test(\"Successful response\", function () {\r",
 							"    pm.expect(pm.response.text()).to.include(\"success\");\r",
@@ -147,7 +143,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "803c02b5-8647-4bc0-b4e1-1cfda0022648",
 						"exec": [
 							"pm.test(\"Successful response\", function () {\r",
 							"    pm.expect(pm.response.text()).to.include(\"success\");\r",
@@ -179,6 +174,5 @@
 			},
 			"response": []
 		}
-	],
-	"protocolProfileBehavior": {}
+	]
 }

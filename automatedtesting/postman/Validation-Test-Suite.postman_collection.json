@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "980cefb9-1141-4666-bb07-c39683480c93",
-		"name": "Validation Test",
+		"_postman_id": "ac3de34c-e316-40df-babc-761c1f1f5c7b",
+		"name": "Validation-Test-Suite",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -11,7 +11,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "61cf5e26-a1a5-45ab-b478-502139c4d4bb",
 						"exec": [
 							"var jsonData = pm.response.json();\r",
 							"pm.environment.set(\"id\", jsonData.data.id);\r",
@@ -62,7 +61,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "c206cdcc-54d4-423d-9758-9dd8cd969600",
 						"exec": [
 							"pm.test(\"Status code is 200\", function () {\r",
 							"  pm.response.to.have.status(200);\r",
@@ -80,7 +78,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"name\": \"{{newname}}\",\r\n    \"salary\": \"{{newsalary}}\",\r\n    \"age\": \"{{newage}}\"\r\n}",
+					"raw": "{\r\n    \"name\": \"{{updatename}}\",\r\n    \"salary\": \"{{updatesalary}}\",\r\n    \"age\": \"{{updateage}}\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -111,7 +109,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "fdaf2e25-e6b1-4649-8302-fb3c7ebdfdd8",
 						"exec": [
 							" var jsonData = pm.response.json();\r",
 							"\r",
@@ -174,7 +171,6 @@
 				{
 					"listen": "test",
 					"script": {
-						"id": "76cd4328-3906-4007-8209-fca2b3cc51f7",
 						"exec": [
 							"pm.test(\"Status code is 200\", function () {\r",
 							"  pm.response.to.have.status(200);\r",
@@ -205,6 +201,5 @@
 			},
 			"response": []
 		}
-	],
-	"protocolProfileBehavior": {}
+	]
 }

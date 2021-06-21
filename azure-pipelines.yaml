@@ -1,24 +1,21 @@
-trigger:
-  branches:
-    include:
-    - master
-  paths:
-    exclude:
-    - README.md
-    - .gitignore
-    - screenshots/
+name: Ensuring Release Quality Pipeline
+variables:
+  python.version: '3.7.6'
 
+# Deploy the infrastructure needed for the release
 stages:
-- stage: Provision
+- stage: Deploy Infrastructure
   jobs:
-  - job: provision_azure_infrastructure
-    displayName: Provision Azure Infrastructure
+  - job: deploy_infrastructure
+    displayName: Deploy Infrastructure
+    # Using Self Hosted Agent
     pool:
       name: 'MyAgentPool'
     steps:
+    # Download Terraform tfvar file from a secure location
     - task: DownloadSecureFile@1
-      name: tfvardef
-      displayName: Download terraform.tfvars
+      name: tfvarFile
+      displayName: Fetch terraform variables
       inputs:
         secureFile: 'terraform.tfvars' 
 
@@ -29,36 +26,20 @@ stages:
         sshPublicKey: 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCtmLzDz3yP62WZu1BDD8uMaXrC0KTf2a+MxTfkjopz7Bsx1NrTWpjD7zO5R5zRpT4RPwIEAjN1t35FWLCQtYOfydLnBv3P4jiJ6H/5oe8Oj5rgnVXGi29XtuNQEx5JASPcjN5xkpAM0kOUK7ajVMq17q5o4StHuvKSDZ+ooUxa/h+wV6v/6Id9de2V8fPRArO4/X8Ruklwy5GOXSckkRKo0Jl3G2FfqAT5aUr2/G+LWiIaWqF+PKDzUvV3/3+xXVKt8/+xobeQupytMZn8jXznTnu7Fb0WQgl2fGrFnCDMG5YKomva0841s+R8EWCbAx1dyl70VRetjVsG6PPbKf7rrZG8iPkSiqYYcwgieDwDT/uhVVkBJ6rL4yJNOuJPDkw0IJpm5LlfxOoKWDgA0y96dKIPPSBZKEfQ/KjyZ9VHp1ZHm8diyweYn1TVhSV1saEzA5c1EW4YK6gs/ao8buoFPmEi/XoAGJWC3ulJy7ZR8Ay/dcHJdyZQiIBdX/tfxqU= arunan@Arunan'
         sshKeySecureFile: 'udacity_azure'
 
+    # Adding the Terraform variable file to the workspae
     - bash: |
         cp $(Agent.TempDirectory)/terraform.tfvars $(System.DefaultWorkingDirectory)/terraform/environments/test
-      displayName: Copy terraform.tfvars
+      displayName: Copy terraform variables
 
-    - bash: |
-        echo Pipeline workspace dir is $(Pipeline.Workspace)
-        echo Terraform variable definition file is $(tfvardef.secureFilePath)
-        cd $(Agent.TempDirectory)
-        pwd
-        ls -la
-        cat udacity_azure.pub
-        cd ~/.ssh/
-        pwd
-        ls -la
-        cat known_hosts
-        # $(System.DefaultWorkingDirectory) is equivalent to $(Build.SourcesDirectory)
-        cd $(System.DefaultWorkingDirectory)  
-        pwd
-        ls -la
-      displayName: Verify build environment (pre)
-
-    # install Terraform Azure Pipelines Extension by Microsoft DevLabs
-    # https://marketplace.visualstudio.com/items?itemName=ms-devlabs.custom-terraform-tasks
+    # Install terraform
     - task: TerraformInstaller@0
       displayName: Install Terraform
       inputs:
         terraformVersion: '0.13.5'
 
+    # Init terraform
     - task: TerraformTaskV1@0
-      displayName: Terraform Init
+      displayName: Initialize Terraform
       inputs:
         provider: 'azurerm'
         command: 'init'
@@ -69,8 +50,9 @@ stages:
         backendAzureRmKey: 'terraform.tfstate'
         workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
 
+    # Create infrastructure from Terraform
     - task: TerraformTaskV1@0
-      displayName: Terraform Apply
+      displayName: Create Infrastructure
       inputs:
         provider: 'azurerm'
         command: 'apply'
@@ -79,13 +61,17 @@ stages:
         workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
         environmentServiceNameAzureRM: 'azurerm-sc'
 
+# Create the artifacts
 - stage: Build
   jobs:
-  - job: build_artifacts
-    displayName: Build Artifacts
+  - job: create_artifacts
+    displayName: Create Artifacts
+    # Using Self Hosted Agent
     pool:
       name: 'MyAgentPool'
     steps:
+
+    # Archive FakeRestAPI files
     - task: ArchiveFiles@2
       displayName: Archive FakeRestAPI
       inputs:
@@ -95,12 +81,14 @@ stages:
         archiveFile: '$(Build.ArtifactStagingDirectory)/fakerestapi-$(Build.BuildId).zip'
         verbose: true
 
+    # Publish FakeRestAPI files
     - task: PublishPipelineArtifact@1
       displayName: Publish FakeRestAPI artifact
       inputs:
         targetPath: '$(Build.ArtifactStagingDirectory)/fakerestapi-$(Build.BuildId).zip'
         artifactName: 'drop-fakerestapi'
 
+    # Archive Selenium files
     - task: ArchiveFiles@2
       displayName: Archive Selenium
       inputs:
@@ -110,6 +98,7 @@ stages:
         archiveFile: '$(Build.ArtifactStagingDirectory)/selenium-$(Build.BuildId).zip'
         verbose: true
 
+    # Publish Selenium files
     - task: PublishPipelineArtifact@1
       displayName: Publish Selenium artifact
       inputs:
@@ -118,8 +107,9 @@ stages:
 
 - stage: Deployment
   jobs:
-  - deployment: deployment_fakerestapi
+  - deployment: deploy_webapp
     displayName: Deploy FakeRestAPI
+    # Using Self Hosted Agent
     pool:
       name: 'MyAgentPool'
     environment: 'TEST'
@@ -136,8 +126,8 @@ stages:
               package: $(Pipeline.Workspace)/drop-fakerestapi/fakerestapi-$(Build.BuildId).zip
               deploymentMethod: zipDeploy
 
-  - deployment: deployment_vm
-    displayName: Deploy Virtual Machine
+  - deployment: deploy_selenium
+    displayName: Deploy Selenium
     environment:
       name: 'TEST'
       resourceType: VirtualMachine
@@ -146,10 +136,6 @@ stages:
         deploy:
           steps:
           - bash: |
-              pwd
-              hostname
-              uname -a
-              cat /etc/*-release
               sudo apt-get install software-properties-common -y
               sudo apt-add-repository universe -y
               sudo apt-get update -y
@@ -159,11 +145,6 @@ stages:
               sudo apt-get install -y chromium-chromedriver
               python3 -m pip install --upgrade pip
               pip3 install selenium
-              python3 -V
-              pip3 -V
-              /usr/bin/chromium-browser --version
-              /usr/bin/chromedriver --version
-              python3 -c "import selenium; print('Selenium Version:', selenium.__version__)"
               # Install Log Analytics agent on Linux computers (only need to run once)
               # wget https://raw.githubusercontent.com/Microsoft/OMS-Agent-for-Linux/master/installer/scripts/onboard_agent.sh
               # sh onboard_agent.sh -w ${AZURE_LOG_ANALYTICS_ID} -s ${AZURE_LOG_ANALYTICS_PRIMARY_KEY}
@@ -175,8 +156,8 @@ stages:
 
 - stage: Test
   jobs:
-  - deployment: test_vm
-    displayName: Test on Virtual Machine
+  - deployment: test_selenium
+    displayName: Test with Selenium
     environment:
       name: 'TEST'
       resourceType: VirtualMachine
@@ -186,20 +167,15 @@ stages:
           steps:
           - bash: |
               cd $(Pipeline.Workspace)/drop-selenium
-              find . -type f ! -name 'selenium-$(Build.BuildId).zip' -delete  # delete everything except 'selenium-$(Build.BuildId).zip'
+              find . -type f ! -name 'selenium-$(Build.BuildId).zip' -delete
               unzip -o selenium-$(Build.BuildId).zip
-              pwd
-              ls -la
               sudo mkdir -p /var/log/selenium
               sudo chmod 664 /var/log/selenium
               sudo python3 -u selenium-test.py 2>&1 | sudo tee -a /var/log/selenium/selenium-test.log
-              # copy selenium log file to $(System.DefaultWorkingDirectory)/log/selenium/
               cd $(System.DefaultWorkingDirectory)
               mkdir -p log/selenium
-              pwd
               sudo cp /var/log/selenium/selenium-test.log log/selenium/selenium-test.log
-              ls -la
-            displayName: Run selenium tests
+            displayName: Test with Selenium
           - task: PublishPipelineArtifact@1
             displayName: Publish selenium logs
             inputs:
@@ -207,20 +183,16 @@ stages:
               artifactName: 'drop-selenium-logs'
 
   - job: test_jmeter
-    displayName: Test JMeter
+    displayName: Test with JMeter
+    # Using Self Hosted Agent
     pool:
       name: 'MyAgentPool'
     steps:
     - bash: |
         sudo apt-get install openjdk-11-jre-headless -y
-        java -version
         wget https://archive.apache.org/dist/jmeter/binaries/apache-jmeter-5.4.tgz -O jmeter.tgz
         tar xzvf jmeter.tgz
-        apache-jmeter-5.4/bin/jmeter --version
-        # create log directory
         mkdir -p log/jmeter
-        pwd
-        ls -la
       displayName: Install JMeter
     - bash: |
         apache-jmeter-5.4/bin/jmeter -n -t automatedtesting/jmeter/stress-test.jmx \
@@ -264,7 +236,8 @@ stages:
         artifactName: 'drop-jmeter-logs'
 
   - job: test_newman
-    displayName: Test Postman (using Newman CLI)
+    displayName: Test with Postman
+    # Using Self Hosted Agent
     pool:
       name: 'MyAgentPool'
     steps: 
@@ -307,56 +280,3 @@ stages:
         testResultsFiles: '*.xml'
         mergeTestResults: true
         testRunTitle: 'Publish Newman test results'
-
-# - stage: Destroy
-#   jobs:
-#   - job: destroy_azure_infrastructure
-#     displayName: Destroy Azure Infrastructure
-#     pool:
-#       name: 'MyAgentPool'
-#     steps:
-#     - task: DownloadSecureFile@1
-#       name: tfvardef
-#       displayName: Download terraform.tfvars
-#       inputs:
-#         secureFile: 'terraform.tfvars' 
-
-#     # Needed for Terraform VM deployment
-#     - task: InstallSSHKey@0
-#       inputs:
-#         knownHostsEntry: 'known_hosts'
-#         sshPublicKey: $(PUBLIC_KEY)
-#         sshKeySecureFile: 'udacity_azure'
-
-#     - bash: |
-#         cp $(Agent.TempDirectory)/terraform.tfvars $(System.DefaultWorkingDirectory)/terraform/environments/test
-#       displayName: Copy terraform.tfvars
-
-#     # install Terraform Azure Pipelines Extension by Microsoft DevLabs
-#     # https://marketplace.visualstudio.com/items?itemName=ms-devlabs.custom-terraform-tasks
-#     - task: TerraformInstaller@0
-#       displayName: Install Terraform
-#       inputs:
-#         terraformVersion: '0.13.5'
-
-#     - task: TerraformTaskV1@0
-#       displayName: Terraform Init
-#       inputs:
-#         provider: 'azurerm'
-#         command: 'init'
-#         backendServiceArm: 'azurerm-sc'
-#         backendAzureRmResourceGroupName: 'tstate'
-#         backendAzureRmStorageAccountName: 'tstate12785'
-#         backendAzureRmContainerName: 'tstate'
-#         backendAzureRmKey: 'terraform.tfstate'
-#         workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
-
-#     - task: TerraformTaskV1@0
-#       displayName: Terraform Destroy
-#       inputs:
-#         provider: 'azurerm'
-#         command: 'destroy'
-#         commandOptions: |
-#           -auto-approve 
-#         workingDirectory: '$(System.DefaultWorkingDirectory)/terraform/environments/test'
-#         environmentServiceNameAzureRM: 'azurerm-sc'

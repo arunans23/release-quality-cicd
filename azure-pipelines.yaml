@@ -4,7 +4,7 @@ variables:
 
 # Deploy the infrastructure needed for the release
 stages:
-- stage: Deploy Infrastructure
+- stage: Prepare
   jobs:
   - job: deploy_infrastructure
     displayName: Deploy Infrastructure
